@@ -3,48 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MCDM Input + Table Display</title>
+  <title>MCDM Table Input</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <div class="card" id="step1">
-      <h2>Define Your Decision Table</h2>
-      <div class="input-row">
-        <label>Number of Criteria:</label>
-        <input type="number" id="numCriteria" min="1" value="3">
-      </div>
-      <div class="input-row">
-        <label>Number of Alternatives:</label>
-        <input type="number" id="numAlternatives" min="1" value="3">
-      </div>
-      <button id="nextBtn">Next</button>
+    <h2>MCDM Input Table</h2>
+
+    <div class="input-row">
+      <label>Number of Criteria: </label>
+      <input type="number" id="numCriteria" min="1" value="3">
     </div>
 
-    <div class="card hidden" id="step2">
-      <h2>Edit Criteria and Alternatives</h2>
-
-      <div class="section">
-        <h3>Criteria Names:</h3>
-        <div id="criteriaNames"></div>
-      </div>
-
-      <div class="section">
-        <h3>Alternative Names:</h3>
-        <div id="alternativeNames"></div>
-      </div>
-
-      <div class="button-row">
-        <button id="backBtn">Back</button>
-        <button id="generateBtn">Generate Table</button>
-      </div>
+    <div class="input-row">
+      <label>Number of Alternatives:</label>
+      <input type="number" id="numAlternatives" min="1" value="3">
     </div>
 
-    <div class="hidden" id="tableView"></div>
-    </div>
+    <div id="tableContainer"></div>
 
-  <script src="tableView.js"></script>
+    <button id="nextBtn">Next: Weights</button>
+  </div>
+
   <script src="script.js"></script>
-  
 </body>
 </html>
