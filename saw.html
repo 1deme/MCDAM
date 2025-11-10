@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAW Method</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #eef2ff, #dbeafe);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    padding: 24px;
+    width: fit-content;
+  }
+
+  h2 { text-align: center; color: #4338ca; margin-bottom: 16px; }
+
+  table { border-collapse: collapse; margin: 0 auto; }
+  th, td { border: 1px solid #e5e7eb; padding: 6px; text-align: center; }
+  th { background-color: #6366f1; color: white; }
+  tr:nth-child(even) td { background-color: #f9fafb; }
+
+  input[type="number"] { width: 70px; text-align: center; }
+
+  .criteria-row input[type="number"] { width: 50px; }
+
+  button {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-top: 12px;
+    cursor: pointer;
+  }
+
+  button:hover { background-color: #4338ca; }
+
+  .highlight { background-color: #34d399 !important; color: white; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>SAW Method</h2>
+
+  <div id="tableContainer"></div>
+
+  <button id="calculateBtn">Calculate SAW</button>
+
+  <div id="results" style="margin-top:20px;"></div>
+</div>
+
+<script>
+
+const criteria = JSON.parse(localStorage.getItem('criteria'));
+const alternatives = JSON.parse(localStorage.getItem('alternatives'));
+const tableValues = JSON.parse(localStorage.getItem('tableValues'));
+
+// ----------------- Build Table -----------------
+const tableContainer = document.getElementById('tableContainer');
+
+function buildTable() {
+  const table = document.createElement('table');
+
+  // Header
+  const headerRow = document.createElement('tr');
+  headerRow.appendChild(document.createElement('th')); // empty top-left cell
+  criteria.forEach(c => {
+    const th = document.createElement('th');
+    th.innerHTML = c;
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+
+  // Row for positive/negative selection
+  const typeRow = document.createElement('tr');
+  typeRow.appendChild(document.createElement('th')); // corner cell
+  criteria.forEach((c,i) => {
+    const td = document.createElement('td');
+    td.innerHTML = `
+      <select id="type-${i}">
+        <option value="positive">Positive</option>
+        <option value="negative">Negative</option>
+      </select>
+    `;
+    typeRow.appendChild(td);
+  });
+  table.appendChild(typeRow);
+
+  // Row for weights
+  const weightRow = document.createElement('tr');
+  weightRow.appendChild(document.createElement('th')); // corner cell
+  criteria.forEach((c,i) => {
+    const td = document.createElement('td');
+    td.innerHTML = `<input type="number" id="weight-${i}" value="1" min="0">`;
+    weightRow.appendChild(td);
+  });
+  table.appendChild(weightRow);
+
+  // Alternative rows with input values
+  alternatives.forEach((alt,r) => {
+    const row = document.createElement('tr');
+    const th = document.createElement('th');
+    th.textContent = alt;
+    row.appendChild(th);
+
+    criteria.forEach((c,cIdx) => {
+      const td = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.value = tableValues[r][cIdx];
+      input.id = `cell-${r}-${cIdx}`;
+      td.appendChild(input);
+      row.appendChild(td);
+    });
+    table.appendChild(row);
+  });
+
+  tableContainer.appendChild(table);
+}
+
+buildTable();
+
+// ----------------- SAW Calculation -----------------
+function calculateSAW() {
+  // Read weights
+  let weights = criteria.map((c,i) => parseFloat(document.getElementById(`weight-${i}`).value) || 0);
+  const weightSum = weights.reduce((a,b)=>a+b,0);
+
+  // --- NEW CHECK ---
+  if(Math.abs(weightSum - 1) > 0.0001){  // allow small floating point error
+    alert(`Weights must sum to 1! Current sum is ${weightSum.toFixed(3)}`);
+    return; // stop calculation
+  }
+  // --- END CHECK ---
+
+  // Read types
+  const types = criteria.map((c,i) => document.getElementById(`type-${i}`).value);
+
+  // Normalize weights anyway (optional, here you could skip since sum = 1)
+  weights = weights.map(w => w/weightSum);
+
+  // Read table values
+  const values = alternatives.map((alt,r) =>
+    criteria.map((c,cIdx) =>
+      parseFloat(document.getElementById(`cell-${r}-${cIdx}`).value)
+    )
+  );
+
+  // Normalize values per SAW
+  const normalized = [];
+  criteria.forEach((c,cIdx)=>{
+    const col = values.map(row=>row[cIdx]);
+    const max = Math.max(...col);
+    const min = Math.min(...col);
+    col.forEach((val,r)=>{
+      if(!normalized[r]) normalized[r] = [];
+      if(types[cIdx] === 'positive') {
+        normalized[r][cIdx] = val / max;
+      } else {
+        normalized[r][cIdx] = min / val;
+      }
+    });
+  });
+
+  // Weighted sum
+  const scores = normalized.map((row,r)=>{
+    return row.reduce((sum,val,cIdx)=>sum + val*weights[cIdx],0);
+  });
+
+  // Display results
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = '<h3>Scores</h3>';
+  const ul = document.createElement('ul');
+
+  const maxScore = Math.max(...scores);
+
+  scores.forEach((score,r)=>{
+    const li = document.createElement('li');
+    li.textContent = `${alternatives[r]}: ${score.toFixed(3)}`;
+    if(score === maxScore) li.classList.add('highlight');
+    ul.appendChild(li);
+  });
+
+  resultsDiv.appendChild(ul);
+}
+document.getElementById('calculateBtn').addEventListener('click', calculateSAW);
+</script>
+
+</body>
+</html>
