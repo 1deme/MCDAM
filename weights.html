@@ -18,8 +18,21 @@
     <div id="weightsContainer"></div>
 
     <div style="margin-top: 20px;">
-      <button id="assistantBtn">Assistant Weight Entry</button>
+      <button id="assistantBtn">Assistant Weight Entry (AHP)</button>
       <button id="nextBtn">Next: Calculate</button>
+    </div>
+
+    <!-- AHP Modal -->
+    <div id="ahpModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center;">
+      <div style="background:white; padding:20px; border-radius:10px; max-width:90%; max-height:90%; overflow:auto;">
+        <h3>Pairwise Comparison (AHP)</h3>
+        <div id="pairwiseTable"></div>
+        <div id="ahpResults" style="margin-top:10px; color:#333;"></div>
+        <div style="margin-top:15px;">
+          <button id="calcAHPBtn">Calculate Weights</button>
+          <button id="closeModalBtn">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 
