@@ -139,9 +139,60 @@ function calculateSAW() {
   resultsDiv.appendChild(ul);
 }
 
+// ------------------- TOPSIS Calculation -------------------
+function calculateTOPSIS() {
+  // Step 1: Normalize matrix (vector normalization)
+  const normalized = [];
+  for (let cIdx = 0; cIdx < criteria.length; cIdx++) {
+    const col = tableValues.map(row => row[cIdx]);
+    const denominator = Math.sqrt(col.reduce((sum, val) => sum + val * val, 0));
+    col.forEach((val, rIdx) => {
+      if (!normalized[rIdx]) normalized[rIdx] = [];
+      normalized[rIdx][cIdx] = val / denominator;
+    });
+  }
+
+  // Step 2: Weighted normalized matrix
+  const weighted = normalized.map(row =>
+    row.map((val, cIdx) => val * weights[cIdx])
+  );
+
+  // Step 3: Determine positive and negative ideal (all benefit)
+  const idealPositive = [];
+  const idealNegative = [];
+  for (let cIdx = 0; cIdx < criteria.length; cIdx++) {
+    const col = weighted.map(row => row[cIdx]);
+    idealPositive[cIdx] = Math.max(...col);
+    idealNegative[cIdx] = Math.min(...col);
+  }
+
+  // Step 4: Calculate distances to ideals
+  const dPositive = weighted.map(row =>
+    Math.sqrt(row.reduce((sum, val, cIdx) => sum + Math.pow(val - idealPositive[cIdx], 2), 0))
+  );
+  const dNegative = weighted.map(row =>
+    Math.sqrt(row.reduce((sum, val, cIdx) => sum + Math.pow(val - idealNegative[cIdx], 2), 0))
+  );
+
+  // Step 5: Calculate final scores (closeness coefficient)
+  const scores = dNegative.map((dNeg, i) => dNeg / (dNeg + dPositive[i]));
+
+  // Display results
+  resultsDiv.innerHTML = "<h3>TOPSIS Scores</h3>";
+  const ul = document.createElement("ul");
+  const maxScore = Math.max(...scores);
+  scores.forEach((score, rIdx) => {
+    const li = document.createElement("li");
+    li.textContent = `${alternatives[rIdx]}: ${score.toFixed(3)}`;
+    if (score === maxScore) li.style.color = "green";
+    ul.appendChild(li);
+  });
+  resultsDiv.appendChild(ul);
+}
+
 // ------------------- Buttons -------------------
 simpleBtn.addEventListener("click", calculateSAW);
-topsisBtn.addEventListener("click", () => alert("TOPSIS Method is not implemented yet."));
+topsisBtn.addEventListener("click", calculateTOPSIS);
 
 // ------------------- Initialize -------------------
 buildCriterionTypeSelectors();
