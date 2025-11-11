@@ -194,7 +194,7 @@ nextBtn.addEventListener("click", () => {
   const weights = Array.from(document.querySelectorAll(".weightInput")).map(i => parseFloat(i.value) || 0);
   const sum = weights.reduce((a, b) => a + b, 0);
 
-  if (Math.abs(sum - 1) > 0.001) {
+  if (Math.abs(sum - 1) > 0.002) {
     alert("Sum of weights must be 1. Please recalculate or normalize.");
     return;
   }
