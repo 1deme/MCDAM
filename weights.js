@@ -141,6 +141,67 @@ function buildPairwiseTable() {
   pairwiseTable.appendChild(table);
 }
 
+const entropyBtn = document.getElementById("entropyBtn");
+
+entropyBtn.addEventListener("click", () => {
+  const m = alternatives.length;   // number of alternatives
+  const n = criteria.length;       // number of criteria
+
+  // --- Build decision matrix X from the table ---
+  const X = [];
+  const rows = tableContainer.querySelectorAll("tr");
+
+  // skip header (row 0)
+  for (let i = 1; i <= m; i++) {
+    const cells = rows[i].querySelectorAll("input");
+    X.push(Array.from(cells).map(c => parseFloat(c.value)));
+  }
+
+  // --- Step 1: Normalize each column by column sum ---
+  const colSums = Array(n).fill(0);
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < m; i++) {
+      colSums[j] += X[i][j];
+    }
+  }
+
+  const P = X.map(row => row.map((val, j) => colSums[j] === 0 ? 0 : val / colSums[j]));
+
+  // --- Step 2: Entropy calculation ---
+  const k = 1 / Math.log(m);
+  const entropy = Array(n).fill(0);
+
+  for (let j = 0; j < n; j++) {
+    let sum = 0;
+    for (let i = 0; i < m; i++) {
+      const pij = P[i][j];
+      if (pij > 0) sum += pij * Math.log(pij);
+    }
+    entropy[j] = -k * sum;
+  }
+
+  // --- Step 3: Degree of divergence ---
+  const d = entropy.map(e => 1 - e);
+
+  // --- Step 4: Normalize to weights ---
+  const dSum = d.reduce((a, b) => a + b, 0);
+  const weights = d.map(v => (dSum === 0 ? 0 : v / dSum));
+
+  // Output result (optional small div)
+  ahpResults.innerHTML = `
+    <p><b>Entropy Weights:</b> ${weights.map(w => w.toFixed(3)).join(", ")}</p>
+  `;
+
+  // Fill the weight inputs
+  document.querySelectorAll(".weightInput").forEach((input, i) => {
+    input.value = weights[i].toFixed(3);
+  });
+
+  // Save to localStorage
+  localStorage.setItem("weights", JSON.stringify(weights));
+});
+
+
 // ------------------- AHP Calculation -------------------
 calcAHPBtn.addEventListener("click", () => {
   const n = criteria.length;
